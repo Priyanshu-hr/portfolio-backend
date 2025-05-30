@@ -7,7 +7,7 @@ const app = express();
 
 // Improved CORS configuration
 app.use(cors({
-  origin: ['https://priyanshu-hr.github.io/Priyanshu-portfolio', 'http://localhost:3000'],
+  origin: ['https://priyanshu-hr.github.io/', 'http://localhost:3000'],
   methods: ['POST', 'GET'],
   credentials: true
 }));
