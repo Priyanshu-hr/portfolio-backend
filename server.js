@@ -5,17 +5,22 @@ require('dotenv').config();
 
 const app = express();
 
-// Middleware
-app.use(cors());
+// Improved CORS configuration
+app.use(cors({
+  origin: ['https://priyanshu-hr.github.io/Priyanshu-portfolio', 'http://localhost:3000'],
+  methods: ['POST', 'GET'],
+  credentials: true
+}));
 app.use(express.json());
 
-// Create email transporter using Outlook (free)
+// Improved email transporter configuration
 const transporter = nodemailer.createTransport({
   service: 'outlook',
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS
-  }
+  },
+  debug: true // Add this for debugging
 });
 
 // Test route
@@ -23,12 +28,17 @@ app.get('/', (req, res) => {
   res.json({ message: 'Portfolio backend is running!' });
 });
 
-// Contact form endpoint
+// Improved contact form endpoint with better error handling
 app.post('/api/contact', async (req, res) => {
   try {
     const { name, email, message } = req.body;
     
-    // Email content
+    if (!name || !email || !message) {
+      return res.status(400).json({ 
+        message: 'Please provide name, email and message.' 
+      });
+    }
+
     const mailOptions = {
       from: process.env.EMAIL_USER,
       to: process.env.EMAIL_USER,
@@ -43,12 +53,18 @@ app.post('/api/contact', async (req, res) => {
       `
     };
 
+    // Verify email configuration
+    await transporter.verify();
+    
     // Send email
     await transporter.sendMail(mailOptions);
     res.status(200).json({ message: 'Message sent successfully!' });
   } catch (error) {
-    console.error('Error sending email:', error);
-    res.status(500).json({ message: 'Error sending message. Please try again.' });
+    console.error('Error details:', error);
+    res.status(500).json({ 
+      message: 'Error sending message. Please try again.',
+      error: error.message 
+    });
   }
 });
 
