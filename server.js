@@ -5,70 +5,78 @@ require('dotenv').config();
 
 const app = express();
 
-// Improved CORS configuration
-app.use(cors({
-  origin: ['https://priyanshu-hr.github.io/', 'http://localhost:3000'],
-  methods: ['POST', 'GET'],
-  credentials: true
-}));
+
+app.use(cors());
 app.use(express.json());
 
-// Improved email transporter configuration
+
 const transporter = nodemailer.createTransport({
-  service: 'outlook',
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS
-  },
-  debug: true // Add this for debugging
-});
-
-// Test route
-app.get('/', (req, res) => {
-  res.json({ message: 'Portfolio backend is running!' });
-});
-
-// Improved contact form endpoint with better error handling
-app.post('/api/contact', async (req, res) => {
-  try {
-    const { name, email, message } = req.body;
-    
-    if (!name || !email || !message) {
-      return res.status(400).json({ 
-        message: 'Please provide name, email and message.' 
-      });
+    service: 'gmail',  
+    auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS 
     }
+});
 
-    const mailOptions = {
-      from: process.env.EMAIL_USER,
-      to: process.env.EMAIL_USER,
-      subject: `Portfolio Contact from ${name}`,
-      html: `
-        <h3>New Contact Form Submission</h3>
-        <p><strong>Time:</strong> ${new Date().toISOString()}</p>
-        <p><strong>Name:</strong> ${name}</p>
-        <p><strong>Email:</strong> ${email}</p>
-        <p><strong>Message:</strong></p>
-        <p>${message}</p>
-      `
-    };
 
-    // Verify email configuration
-    await transporter.verify();
+app.get('/', (req, res) => {
+    res.json({ message: 'Portfolio backend is running!' });
+});
+
+
+app.post('/api/contact', async (req, res) => {
+    console.log('Received contact form submission:', req.body); // Debug log
+
+    try {
+        const { name, email, message } = req.body;
+        
+       
+        if (!name || !email || !message) {
+            console.log('Missing required fields');
+            return res.status(400).json({ 
+                success: false,
+                message: 'Please provide name, email and message.' 
+            });
+        }
+
+        const mailOptions = {
+            from: process.env.EMAIL_USER,
+            to: process.env.EMAIL_USER, // Send to yourself
+            subject: `Portfolio Contact from ${name}`,
+            html: `
+                <h3>New Contact Form Submission</h3>
+                <p><strong>Time:</strong> ${new Date().toISOString()}</p>
+                <p><strong>Name:</strong> ${name}</p>
+                <p><strong>Email:</strong> ${email}</p>
+                <p><strong>Message:</strong></p>
+                <p>${message}</p>
+            `
+        };
+
     
-    // Send email
-    await transporter.sendMail(mailOptions);
-    res.status(200).json({ message: 'Message sent successfully!' });
-  } catch (error) {
-    console.error('Error details:', error);
-    res.status(500).json({ 
-      message: 'Error sending message. Please try again.',
-      error: error.message 
-    });
-  }
+        const info = await transporter.sendMail(mailOptions);
+        console.log('Email sent successfully:', info.response);
+        
+        res.status(200).json({ 
+            success: true,
+            message: 'Message sent successfully!' 
+        });
+    } catch (error) {
+        console.error('Error sending email:', error);
+        res.status(500).json({ 
+            success: false,
+            message: 'Error sending message. Please try again.',
+            error: error.message 
+        });
+    }
 });
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+    console.log(`Server is running on port ${PORT}`);
+    console.log('Email configuration:', {
+        service: 'gmail',
+        user: process.env.EMAIL_USER ? '✓ Set' : '✗ Missing',
+        pass: process.env.EMAIL_PASS ? '✓ Set' : '✗ Missing'
+    });
 });
