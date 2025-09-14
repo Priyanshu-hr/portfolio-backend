@@ -1,0 +1,18 @@
+// Prisma schema for Neon.tech connection and Contact model
+
+datasource db {
+  provider = "postgresql"
+  url      = "postgresql://neondb_owner:npg_q7ktvZid3aEc@ep-still-bread-adt9lo5x-pooler.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Contact {
+  id      Int    @id @default(autoincrement())
+  name    String
+  email   String
+  message String
+  createdAt DateTime @default(now())
+}
